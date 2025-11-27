@@ -120,6 +120,7 @@ android {
     packagingOptions {
         jniLibs {
             useLegacyPackaging (findProperty('expo.useLegacyPackaging')?.toBoolean() ?: false)
+            pickFirsts += ['lib/arm64-v8a/libaosl.so', 'lib/armeabi-v7a/libaosl.so', 'lib/x86/libaosl.so', 'lib/x86_64/libaosl.so']
         }
     }
     androidResources {
