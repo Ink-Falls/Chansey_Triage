@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { View, Text, Pressable, Animated, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { TriageResult } from "../hooks/useTriageRecorder";
+import { SignalService } from "../utils/AgoraSignal";
 
 interface ResultCardProps {
   result: TriageResult;
@@ -24,6 +25,23 @@ export function ResultCard({ result, colors, fadeAnim }: ResultCardProps) {
       : result.urgency === "Medium"
       ? "warning"
       : "checkmark-circle";
+
+  const sentRef = useRef(false);
+
+  useEffect(() => {
+    if (result.urgency === "High" && !sentRef.current) {
+      const initRtm = async () => {
+        try {
+          await SignalService.init();
+          await SignalService.sendAlert("doctor_dashboard", "HIGH");
+          sentRef.current = true;
+        } catch (e) {
+          console.log("RTM Error", e);
+        }
+      };
+      initRtm();
+    }
+  }, [result.urgency]);
 
   return (
     <Animated.View
