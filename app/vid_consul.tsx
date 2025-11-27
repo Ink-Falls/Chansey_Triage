@@ -1,11 +1,168 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from 'react-native-vector-icons/Feather';
+
+// Dynamically import Agora only on web
+let AgoraRTC: any = null;
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  AgoraRTC = require('agora-rtc-sdk-ng').default;
+}
+
+// Agora Configuration
+const AGORA_CONFIG = {
+  appId: '1364f588b53c42baac5772751347347a',
+  token: null,
+  channelName: 'consultation-channel',
+};
 
 export default function VideoCallApp() {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isJoined, setIsJoined] = useState(false);
+  const [remoteUid, setRemoteUid] = useState<number | null>(null);
+  const [remoteUsers, setRemoteUsers] = useState<any[]>([]);
+  
+  const client = useRef<any>(null);
+  const localAudioTrack = useRef<any>(null);
+  const localVideoTrack = useRef<any>(null);
+  const remoteVideoRef = useRef<HTMLDivElement>(null);
+  const localVideoRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    initAgora();
+    return () => {
+      leaveChannel();
+    };
+  }, []);
+
+  const initAgora = async () => {
+    if (Platform.OS !== 'web') {
+      console.log('Agora Web SDK only works on web platform');
+      return;
+    }
+
+    try {
+      // Create Agora client
+      client.current = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+
+      // Set up event listeners
+      client.current.on('user-published', async (user: any, mediaType: string) => {
+        await client.current.subscribe(user, mediaType);
+        console.log('Subscribe success');
+        
+        if (mediaType === 'video') {
+          setRemoteUid(user.uid);
+          setRemoteUsers((prev) => [...prev, user]);
+          
+          // Play remote video
+          setTimeout(() => {
+            if (remoteVideoRef.current) {
+              user.videoTrack?.play(remoteVideoRef.current);
+            }
+          }, 100);
+        }
+        
+        if (mediaType === 'audio') {
+          user.audioTrack?.play();
+        }
+      });
+
+      client.current.on('user-unpublished', (user: any) => {
+        console.log('User unpublished:', user.uid);
+        setRemoteUsers((prev) => prev.filter((u) => u.uid !== user.uid));
+        if (remoteUid === user.uid) {
+          setRemoteUid(null);
+        }
+      });
+
+      // Join channel
+      await client.current.join(
+        AGORA_CONFIG.appId,
+        AGORA_CONFIG.channelName,
+        AGORA_CONFIG.token,
+        null
+      );
+      
+      setIsJoined(true);
+      console.log('Joined channel successfully');
+
+      // Create and publish local tracks
+      localAudioTrack.current = await AgoraRTC.createMicrophoneAudioTrack();
+      localVideoTrack.current = await AgoraRTC.createCameraVideoTrack();
+
+      await client.current.publish([localAudioTrack.current, localVideoTrack.current]);
+      console.log('Published local tracks');
+
+      // Play local video
+      if (localVideoRef.current) {
+        localVideoTrack.current.play(localVideoRef.current);
+      }
+    } catch (error) {
+      console.error('Error initializing Agora:', error);
+    }
+  };
+
+  const leaveChannel = async () => {
+    try {
+      // Stop and close local tracks
+      localAudioTrack.current?.stop();
+      localAudioTrack.current?.close();
+      localVideoTrack.current?.stop();
+      localVideoTrack.current?.close();
+      
+      // Leave the channel
+      await client.current?.leave();
+      
+      setIsJoined(false);
+      setRemoteUid(null);
+      setRemoteUsers([]);
+      console.log('Left channel successfully');
+    } catch (error) {
+      console.error('Error leaving channel:', error);
+    }
+  };
+
+  const toggleMute = async () => {
+    try {
+      const newMutedState = !isMuted;
+      if (localAudioTrack.current) {
+        await localAudioTrack.current.setEnabled(!newMutedState);
+      }
+      setIsMuted(newMutedState);
+    } catch (error) {
+      console.error('Error toggling mute:', error);
+    }
+  };
+
+  const toggleVideo = async () => {
+    try {
+      const newVideoOffState = !isVideoOff;
+      if (localVideoTrack.current) {
+        await localVideoTrack.current.setEnabled(!newVideoOffState);
+      }
+      setIsVideoOff(newVideoOffState);
+    } catch (error) {
+      console.error('Error toggling video:', error);
+    }
+  };
+
+  const switchCamera = async () => {
+    try {
+      if (localVideoTrack.current) {
+        // Get available cameras
+        const cameras = await AgoraRTC.getCameras();
+        if (cameras.length > 1) {
+          const currentDevice = localVideoTrack.current.getTrackLabel();
+          const nextCamera = cameras.find((cam: any) => cam.label !== currentDevice) || cameras[0];
+          await localVideoTrack.current.setDevice(nextCamera.deviceId);
+          console.log('Switched camera to:', nextCamera.label);
+        }
+      }
+    } catch (error) {
+      console.error('Error switching camera:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -33,29 +190,72 @@ export default function VideoCallApp() {
 
       {/* Video Area */}
       <View style={styles.videoArea}>
-        <View style={styles.centerContent}>
-          {/* Doctor Avatar */}
-          <LinearGradient
-            colors={['#7EFD94', '#698DFE', '#7F4EF0']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.avatar}
-          >
-            <Text style={styles.avatarText}>MS</Text>
-          </LinearGradient>
-
-          {/* Doctor Name */}
-          <Text style={styles.doctorName}>Maria Santos</Text>
-
-          {/* Call Duration */}
-          <View style={styles.durationContainer}>
-            <View style={styles.clockIcon}>
-              <Icon name="clock" size={16} color="#6b7280" />
+        {/* Remote Video (Doctor) */}
+        {remoteUid ? (
+          Platform.OS === 'web' ? (
+            <div ref={remoteVideoRef as any} style={{
+              flex: 1,
+              backgroundColor: '#000000',
+              borderRadius: 16,
+              overflow: 'hidden',
+              width: '100%',
+              height: '100%',
+            }} />
+          ) : (
+            <View style={styles.remoteVideo}>
+              <LinearGradient
+                colors={['#7EFD94', '#698DFE', '#7F4EF0']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.avatar}
+              >
+                <Text style={styles.avatarText}>MS</Text>
+              </LinearGradient>
+              <Text style={styles.doctorName}>Maria Santos</Text>
+              <Text style={styles.waitingText}>Video call connected</Text>
             </View>
+          )
+        ) : (
+          <View style={styles.centerContent}>
+            <LinearGradient
+              colors={['#7EFD94', '#698DFE', '#7F4EF0']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.avatar}
+            >
+              <Text style={styles.avatarText}>MS</Text>
+            </LinearGradient>
+            <Text style={styles.doctorName}>Maria Santos</Text>
+            <View style={styles.durationContainer}>
+              <View style={styles.clockIcon}>
+                <Icon name="clock" size={16} color="#6b7280" />
+              </View>
+            </View>
+            <Text style={styles.duration}>Waiting to connect...</Text>
           </View>
-
-          <Text style={styles.duration}>05:42</Text>
-        </View>
+        )}
+        
+        {/* Local Video Preview (Your camera) - Small overlay */}
+        {isJoined && !isVideoOff && (
+          Platform.OS === 'web' ? (
+            <div ref={localVideoRef as any} style={{
+              position: 'absolute',
+              top: 20,
+              right: 20,
+              width: 120,
+              height: 160,
+              backgroundColor: '#1f2937',
+              borderRadius: 12,
+              border: '2px solid #ffffff',
+              overflow: 'hidden',
+            }} />
+          ) : (
+            <View style={styles.localVideo}>
+              <Icon name="user" size={32} color="#ffffff" />
+              <Text style={styles.localVideoText}>You</Text>
+            </View>
+          )
+        )}
       </View>
 
       {/* Controls */}
@@ -63,16 +263,16 @@ export default function VideoCallApp() {
         <View style={styles.controlsRow}>
           {/* End Call Button */}
           <View style={styles.controlItem}>
-            <TouchableOpacity style={styles.endCallButton}>
+            <TouchableOpacity style={styles.endCallButton} onPress={leaveChannel}>
               <Icon name="phone" size={24} color="#ffffff" style={{ transform: [{ rotate: '135deg' }] }} />
             </TouchableOpacity>
-            <Text style={styles.controlLabel}>Decline</Text>
+            <Text style={styles.controlLabel}>End Call</Text>
           </View>
 
           {/* Mute Button */}
           <View style={styles.controlItem}>
             <TouchableOpacity
-              onPress={() => setIsMuted(!isMuted)}
+              onPress={toggleMute}
               style={[styles.controlButton, isMuted && styles.activeButton]}
             >
               <Icon name={isMuted ? "mic-off" : "mic"} size={24} color={isMuted ? "#ffffff" : "#374151"} />
@@ -83,7 +283,7 @@ export default function VideoCallApp() {
           {/* Video Toggle Button */}
           <View style={styles.controlItem}>
             <TouchableOpacity
-              onPress={() => setIsVideoOff(!isVideoOff)}
+              onPress={toggleVideo}
               style={[styles.controlButton, isVideoOff && styles.activeButton]}
             >
               <Icon name={isVideoOff ? "video-off" : "video"} size={24} color={isVideoOff ? "#ffffff" : "#374151"} />
@@ -91,12 +291,12 @@ export default function VideoCallApp() {
             <Text style={styles.controlLabel}>Video</Text>
           </View>
 
-          {/* Speaker Button */}
+          {/* Switch Camera Button */}
           <View style={styles.controlItem}>
-            <TouchableOpacity style={styles.controlButton}>
-              <Icon name="volume-2" size={24} color="#374151" />
+            <TouchableOpacity style={styles.controlButton} onPress={switchCamera}>
+              <Icon name="refresh-cw" size={24} color="#374151" />
             </TouchableOpacity>
-            <Text style={styles.controlLabel}>Audio</Text>
+            <Text style={styles.controlLabel}>Flip</Text>
           </View>
         </View>
       </View>
@@ -246,5 +446,40 @@ const styles = StyleSheet.create({
   controlLabel: {
     color: '#6b7280',
     fontSize: 12,
+  },
+  placeholderVideo: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000000',
+    borderRadius: 16,
+  },
+  remoteVideo: {
+    flex: 1,
+    backgroundColor: '#000000',
+    borderRadius: 16,
+  },
+  localVideo: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    width: 120,
+    height: 160,
+    backgroundColor: '#1f2937',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  localVideoText: {
+    color: '#ffffff',
+    fontSize: 12,
+  },
+  waitingText: {
+    color: '#9ca3af',
+    fontSize: 14,
+    marginTop: 8,
   },
 });
