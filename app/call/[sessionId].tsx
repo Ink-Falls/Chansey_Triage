@@ -10,6 +10,9 @@ import {
   ChannelProfileType,
   ClientRoleType,
   IRtcEngineEventHandler,
+  AudioProfileType,
+  AudioScenarioType,
+  AudioAinsMode,
 } from "react-native-agora";
 import { getAuth } from "@react-native-firebase/auth";
 import {
@@ -132,6 +135,28 @@ export default function CallScreen() {
 
       // Enable audio
       engine.enableAudio();
+
+      // Enable AI Noise Suppression (AINS) with explicit mode when available
+      try {
+        // Newer SDKs expose setAINSMode(enabled, mode)
+        engine.setAINSMode?.(true, AudioAinsMode.AinsModeUltralowlatency);
+      } catch (e) {
+        // Preferred API alternative if only boolean toggle exists
+        // @ts-ignore: method availability depends on SDK version
+        engine.enableAiNoiseSuppression?.(true);
+      }
+      // Fallbacks for older SDKs: enable classic noise suppression via parameters
+      try {
+        // Enable built-in noise suppression
+        engine.setParameters('{"che.audio.ns.enable":true}');
+        // Set high-quality speech profile and meeting scenario
+        // AudioProfileType.AudioProfileSpeechStandard (or choose HighQualityStereo per needs)
+        // AudioScenarioType.AudioScenarioMeeting: optimized for voice clarity
+        engine.setAudioProfile(
+          AudioProfileType.AudioProfileSpeechStandard,
+          AudioScenarioType.AudioScenarioMeeting
+        );
+      } catch {}
 
       // Join channel without token (testing mode)
       console.log("📞 Calling joinChannel...");
