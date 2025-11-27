@@ -12,9 +12,13 @@ import {
   IRtcEngineEventHandler,
 } from "react-native-agora";
 import { getAuth } from "@react-native-firebase/auth";
+import {
+  AGORA_APP_ID,
+  getDevToken,
+  LOBBY_API_URL,
+} from "../../utils/agoraConfig";
 
-const AGORA_APP_ID =
-  process.env.EXPO_PUBLIC_AGORA_APP_ID || "a4bbf1d27589458d96d9bc8eaa6600e4";
+// App ID is centralized in agoraConfig
 
 export default function CallScreen() {
   const { sessionId } = useLocalSearchParams();
@@ -63,15 +67,35 @@ export default function CallScreen() {
       const user = auth.currentUser;
 
       // Use sessionId directly as channel name (matching web dashboard)
-      const channelName = sessionId as string;
-      const uid = 0; // Let Agora assign UID automatically
+      const channelName = String(sessionId);
+      let uid = 0; // Let Agora assign UID automatically
 
-      // TEMPORARY TOKEN - Replace with token from Agora Console
-      // Go to: console.agora.io → Project → Generate Temp Token
-      // Channel: triage_room_1, UID: 0
-      const TEMP_TOKEN =
-        "007eJxTYMj8v2S9rPREJ4E/thUzcg94PFqVWXR2VsRXF6VpvwX2JMgoMCSaJCWlGaYYmZtaWJqYWqRYmqVYJiVbpCYmmpkZGKSaVKZqZDYEMjK47kplZGSAQBCfl6GkKDMxPTW+KD8/N96QgQEAmWgi3Q=="; // Replace this
-      const token = process.env.EXPO_PUBLIC_AGORA_TEMP_TOKEN || TEMP_TOKEN;
+      // Prefer lobby Lambda token; fallback to dev token helper
+      let token = getDevToken();
+      try {
+        if (LOBBY_API_URL) {
+          console.log("Fetching token from lobby:", LOBBY_API_URL);
+          const res = await fetch(LOBBY_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId: channelName,
+              userId: user?.uid ?? "patient_test",
+              role: "patient",
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            token = data.token ?? token;
+            uid = data.uid ?? uid;
+            console.log("Lobby token received. UID:", uid);
+          } else {
+            console.warn("Lobby API responded:", res.status);
+          }
+        }
+      } catch (e) {
+        console.warn("Lobby token fetch failed:", e);
+      }
 
       console.log("Joining channel (no token):", channelName);
       console.log("App ID:", AGORA_APP_ID);
@@ -99,18 +123,19 @@ export default function CallScreen() {
 
       engine.registerEventHandler(eventHandler);
 
-      await engine.initialize({ appId: AGORA_APP_ID });
-      await engine.setChannelProfile(
-        ChannelProfileType.ChannelProfileCommunication
-      );
-      await engine.setClientRole(ClientRoleType.ClientRoleBroadcaster);
+      if (!AGORA_APP_ID) {
+        throw new Error("Missing AGORA_APP_ID. Set EXPO_PUBLIC_AGORA_APP_ID.");
+      }
+      engine.initialize({ appId: AGORA_APP_ID });
+      engine.setChannelProfile(ChannelProfileType.ChannelProfileCommunication);
+      engine.setClientRole(ClientRoleType.ClientRoleBroadcaster);
 
       // Enable audio
-      await engine.enableAudio();
+      engine.enableAudio();
 
       // Join channel without token (testing mode)
       console.log("📞 Calling joinChannel...");
-      await engine.joinChannel(token, channelName, uid, {});
+      engine.joinChannel(token, channelName, uid, {});
 
       console.log("Agora join channel called successfully");
     } catch (error) {

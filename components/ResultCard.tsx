@@ -3,7 +3,7 @@ import { View, Text, Pressable, Animated, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { TriageResult } from "../hooks/useTriageRecorder";
-import { SignalService } from "../utils/AgoraSignal";
+// Removed AgoraSignal/RTM; relying on polling + manual call start
 import { useRouter } from "expo-router";
 
 interface ResultCardProps {
@@ -92,22 +92,7 @@ export function ResultCard({
       ? "warning"
       : "checkmark-circle";
 
-  const sentRef = useRef(false);
-
-  useEffect(() => {
-    if (result.urgency === "High" && !sentRef.current) {
-      const initRtm = async () => {
-        try {
-          await SignalService.init();
-          await SignalService.sendAlert("doctor_dashboard", "HIGH");
-          sentRef.current = true;
-        } catch (e) {
-          console.log("RTM Error", e);
-        }
-      };
-      initRtm();
-    }
-  }, [result.urgency]);
+  // RTM auto-alert removed; alerting handled by backend or manual flow
 
   return (
     <Animated.View
