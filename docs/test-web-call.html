@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agora Test Web Call (Hackathon Mode)</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 20px; }
+      .row { display: flex; gap: 12px; margin: 8px 0; align-items: center; }
+      input { padding: 6px 8px; width: 280px; }
+      button { padding: 6px 12px; }
+      #logs { white-space: pre-wrap; background: #111; color: #eee; padding: 12px; border-radius: 6px; min-height: 160px; }
+    </style>
+    <!-- Load Agora Web SDK -->
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
+  </head>
+  <body>
+    <h1>Agora Test Web Call</h1>
+    <p>Client-side only: join with App ID + Session ID, token null (testing).</p>
+
+    <div class="row">
+      <label>App ID</label>
+      <input id="appId" placeholder="a4bbf1d27589458d96d9bc8eaa6600e4" />
+    </div>
+    <div class="row">
+      <label>Session ID / Channel</label>
+      <input id="channelName" placeholder="triage_room_1" />
+    </div>
+    <div class="row">
+      <label>Token (optional)</label>
+      <input id="token" placeholder="leave empty for testing mode" />
+    </div>
+    <div class="row">
+      <button id="joinBtn">Join</button>
+      <button id="publishBtn">Publish Mic</button>
+      <button id="muteBtn">Mute/Unmute</button>
+      <button id="leaveBtn">Leave</button>
+    </div>
+
+    <h3>Logs</h3>
+    <div id="logs"></div>
+
+    <script>
+      const logsEl = document.getElementById('logs');
+      function log(...args) {
+        const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
+        console.log(...args);
+        logsEl.textContent += msg + "\n";
+      }
+
+      const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+      let localMicTrack = null;
+      let joined = false;
+      let muted = false;
+
+      document.getElementById('joinBtn').onclick = async () => {
+        const appId = document.getElementById('appId').value || 'a4bbf1d27589458d96d9bc8eaa6600e4';
+        const channelName = document.getElementById('channelName').value || 'triage_room_1';
+        const tokenInput = document.getElementById('token').value.trim();
+        const token = tokenInput.length ? tokenInput : null; // null token for testing mode
+        const uid = null; // autogenerate
+
+        try {
+          log('Joining', { appId, channelName, token });
+          const assignedUid = await client.join(appId, channelName, token, uid);
+          joined = true;
+          log('Joined as UID', assignedUid);
+        } catch (err) {
+          log('Join error:', err);
+        }
+      };
+
+      document.getElementById('publishBtn').onclick = async () => {
+        if (!joined) return log('Join first.');
+        try {
+          if (!localMicTrack) {
+            localMicTrack = await AgoraRTC.createMicrophoneAudioTrack();
+          }
+          await client.publish([localMicTrack]);
+          log('Published microphone audio');
+        } catch (err) {
+          log('Publish error:', err);
+        }
+      };
+
+      document.getElementById('muteBtn').onclick = async () => {
+        if (!localMicTrack) return log('Create/publish mic first.');
+        try {
+          muted = !muted;
+          await localMicTrack.setEnabled(!muted);
+          log(muted ? 'Muted mic' : 'Unmuted mic');
+        } catch (err) {
+          log('Mute error:', err);
+        }
+      };
+
+      document.getElementById('leaveBtn').onclick = async () => {
+        try {
+          if (localMicTrack) {
+            localMicTrack.close();
+            localMicTrack = null;
+          }
+          await client.leave();
+          joined = false;
+          log('Left channel');
+        } catch (err) {
+          log('Leave error:', err);
+        }
+      };
+
+      // Basic client event logging
+      client.on('user-joined', (user) => log('Remote user joined:', user.uid));
+      client.on('user-left', (user) => log('Remote user left:', user.uid));
+      client.on('connection-state-change', (cur, prev) => log('Connection state:', prev, '->', cur));
+    </script>
+  </body>
+  </html>

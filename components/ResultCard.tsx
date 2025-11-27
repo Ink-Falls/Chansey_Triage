@@ -1,17 +1,83 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, Animated, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { TriageResult } from "../hooks/useTriageRecorder";
-import { SignalService } from "../utils/AgoraSignal";
+// Removed AgoraSignal/RTM; relying on polling + manual call start
+import { useRouter } from "expo-router";
 
 interface ResultCardProps {
   result: TriageResult;
   colors: any;
   fadeAnim: Animated.Value;
+  sessionId?: string;
 }
 
-export function ResultCard({ result, colors, fadeAnim }: ResultCardProps) {
+function ConnectButton({
+  result,
+  urgencyColor,
+  sessionId,
+}: {
+  result: TriageResult;
+  urgencyColor: string;
+  sessionId?: string;
+}) {
+  const router = useRouter();
+
+  const handleConnect = () => {
+    console.log("Connect button pressed for:", result.specialist);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // Generate or use existing sessionId
+
+    // TEMPORARY FOR TESTING
+    const callSessionId = "triage_room_1";
+    // const callSessionId = sessionId || `session-${Date.now()}`;
+
+    console.log("Initiating call with sessionId:", callSessionId);
+
+    // Navigate to call screen
+    router.push({
+      pathname: "/call/[sessionId]",
+      params: { sessionId: callSessionId },
+    });
+  };
+
+  return (
+    <Pressable
+      style={{
+        backgroundColor: urgencyColor,
+        padding: 16,
+        borderRadius: 12,
+        alignItems: "center",
+        marginTop: 16,
+        flexDirection: "row",
+        justifyContent: "center",
+        gap: 8,
+      }}
+      onPress={handleConnect}
+    >
+      <Ionicons name="call" size={24} color="#FFF" />
+      <Text
+        style={{
+          color: "#FFF",
+          fontSize: 16,
+          fontWeight: "bold",
+          letterSpacing: 0.5,
+        }}
+      >
+        Connect to {result.specialist}
+      </Text>
+    </Pressable>
+  );
+}
+
+export function ResultCard({
+  result,
+  colors,
+  fadeAnim,
+  sessionId,
+}: ResultCardProps) {
   const urgencyColor =
     result.urgency === "High"
       ? "#FF4444"
@@ -26,22 +92,7 @@ export function ResultCard({ result, colors, fadeAnim }: ResultCardProps) {
       ? "warning"
       : "checkmark-circle";
 
-  const sentRef = useRef(false);
-
-  useEffect(() => {
-    if (result.urgency === "High" && !sentRef.current) {
-      const initRtm = async () => {
-        try {
-          await SignalService.init();
-          await SignalService.sendAlert("doctor_dashboard", "HIGH");
-          sentRef.current = true;
-        } catch (e) {
-          console.log("RTM Error", e);
-        }
-      };
-      initRtm();
-    }
-  }, [result.urgency]);
+  // RTM auto-alert removed; alerting handled by backend or manual flow
 
   return (
     <Animated.View
@@ -244,38 +295,11 @@ export function ResultCard({ result, colors, fadeAnim }: ResultCardProps) {
 
         {/* Connect Button for High Urgency */}
         {result.urgency === "High" && (
-          <Pressable
-            style={{
-              backgroundColor: urgencyColor,
-              padding: 16,
-              borderRadius: 12,
-              alignItems: "center",
-              marginTop: 16,
-              flexDirection: "row",
-              justifyContent: "center",
-              gap: 8,
-            }}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              Alert.alert(
-                "Emergency Connection",
-                `Connecting to ${result.specialist}...`,
-                [{ text: "OK" }]
-              );
-            }}
-          >
-            <Ionicons name="videocam" size={24} color="#FFF" />
-            <Text
-              style={{
-                color: "#FFF",
-                fontSize: 16,
-                fontWeight: "bold",
-                letterSpacing: 0.5,
-              }}
-            >
-              Connect to {result.specialist}
-            </Text>
-          </Pressable>
+          <ConnectButton
+            result={result}
+            urgencyColor={urgencyColor}
+            sessionId={sessionId}
+          />
         )}
       </View>
     </Animated.View>

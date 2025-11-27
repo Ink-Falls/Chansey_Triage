@@ -32,7 +32,11 @@ function TabsNavigator() {
           tabBarStyle: {
             backgroundColor: theme.card,
             borderTopColor: theme.cardBorder,
+            display: "none",
+            height: 0,
           },
+          tabBarItemStyle: { display: "none" },
+          tabBarShowLabel: false,
           headerShown: false,
         }}
       >

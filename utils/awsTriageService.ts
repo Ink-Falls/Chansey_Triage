@@ -94,20 +94,12 @@ async function uploadAudioToS3(
 }
 
 /**
- * Step 3: Poll for results or wait for Agora RTM message
+ * Step 3: Poll for results from backend
  *
- * IMPLEMENTATION OPTIONS:
- *
- * A) Polling (Current - Works for hackathon):
+ * Polling Implementation:
  *    - Client polls ChanseyReader (Lambda #3) every 2 seconds
  *    - Simple, no extra dependencies
- *    - ~4-10 second total latency (acceptable for demo)
- *
- * B) Agora RTM Push (Day 2 - Real-time):
- *    - Backend pushes result via Agora RTM
- *    - Client receives message instantly
- *    - <3 second total latency (40% judging criteria!)
- *    - See utils/agoraRTM.ts for integration
+ *    - ~4-10 second total latency
  */
 async function pollForResults(
   userId: string,
@@ -189,33 +181,6 @@ async function pollForResults(
     `Triage result timeout after ${(maxAttempts * intervalMs) / 1000} seconds`
   );
 }
-
-/**
- * Step 3B: Listen for Agora RTM result (Alternative to polling)
- *
- * USAGE (Day 2 implementation):
- *
- * import { agoraRTMClient } from '../utils/agoraRTM';
- *
- * // Replace pollForResults() with:
- * const result = await new Promise<TriageResult>((resolve, reject) => {
- *   const timeout = setTimeout(() => reject(new Error("Timeout")), 30000);
- *
- *   agoraRTMClient.on('MessageFromPeer', (message, peerId) => {
- *     if (message.text.includes(sessionId)) {
- *       clearTimeout(timeout);
- *       const result = JSON.parse(message.text);
- *       resolve(result.data);
- *     }
- *   });
- * });
- *
- * Backend Lambda must send via Agora SDK:
- * await agoraClient.sendMessageToPeer(
- *   { text: JSON.stringify({ sessionId, data: triageResult }) },
- *   userId
- * );
- */
 
 /**
  * Main entry point: Secure end-to-end triage processing

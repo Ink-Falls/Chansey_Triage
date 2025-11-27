@@ -17,6 +17,7 @@ export type TriageResult = {
   category: string;
   specialist: string;
   suggested_action: string;
+  sessionId?: string;
 };
 
 type TriageStatus = "idle" | "recording" | "processing";
@@ -27,6 +28,7 @@ export function useTriageRecorder() {
 
   const [status, setStatus] = useState<TriageStatus>("idle");
   const [lastResult, setLastResult] = useState<TriageResult | null>(null);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const isMounted = useRef(true);
   const isRecordingRef = useRef(false);
 
@@ -140,8 +142,12 @@ export function useTriageRecorder() {
 
           if (!isMounted.current) return;
 
+          // Generate sessionId for this triage
+          const sessionId = `session-${Date.now()}`;
+          setCurrentSessionId(sessionId);
+
           setStatus("idle");
-          setLastResult(result);
+          setLastResult({ ...result, sessionId });
 
           // Save to AsyncStorage for doctor dashboard to pick up
           const patientData = {
@@ -204,6 +210,7 @@ export function useTriageRecorder() {
   return {
     status,
     lastResult,
+    currentSessionId,
     startRecording,
     stopRecording,
   };

@@ -78,25 +78,6 @@ export default function TriageScreen() {
 
         {/* Bottom Section */}
         <View style={{ gap: 16 }}>
-          {/* Test Upload Button (Temporary - Delete after Day 2) */}
-          <Pressable
-            onPress={() => router.push('/(other)/test-upload')}
-            style={{
-              backgroundColor: '#FF6B6B',
-              padding: 16,
-              borderRadius: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 12,
-            }}
-          >
-            <Ionicons name="flask" size={24} color="#FFF" />
-            <Text style={{ color: '#FFF', fontSize: 16, fontWeight: '700' }}>
-              🧪 Test Upload Pipeline
-            </Text>
-          </Pressable>
-
           {/* High Contrast Toggle */}
           <View
             style={{
@@ -134,6 +115,7 @@ export default function TriageScreen() {
               result={lastResult}
               colors={colors}
               fadeAnim={fadeAnim}
+              sessionId={lastResult.sessionId}
             />
           )}
         </View>
