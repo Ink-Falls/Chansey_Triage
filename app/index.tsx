@@ -134,6 +134,7 @@ export default function TriageScreen() {
               result={lastResult}
               colors={colors}
               fadeAnim={fadeAnim}
+              sessionId={lastResult.sessionId}
             />
           )}
         </View>

@@ -96,20 +96,12 @@ async function uploadAudioToS3(
 }
 
 /**
- * Step 3: Poll for results or wait for Agora RTM message
+ * Step 3: Poll for results from backend
  *
- * IMPLEMENTATION OPTIONS:
- *
- * A) Polling (Current - Works for hackathon):
+ * Polling Implementation:
  *    - Client polls ChanseyReader (Lambda #3) every 2 seconds
  *    - Simple, no extra dependencies
- *    - ~4-10 second total latency (acceptable for demo)
- *
- * B) Agora RTM Push (Day 2 - Real-time):
- *    - Backend pushes result via Agora RTM
- *    - Client receives message instantly
- *    - <3 second total latency (40% judging criteria!)
- *    - See utils/agoraRTM.ts for integration
+ *    - ~4-10 second total latency
  */
 async function pollForResults(
   userId: string,
@@ -138,28 +130,40 @@ async function pollForResults(
         // Lambda #3 returns "data" field, not "result"
         const rawResult = data.result || data.data;
         console.log("✅ Triage result received:", rawResult);
-        
+
         // Parse result if it's a JSON string
         let result = rawResult;
-        if (typeof result === 'string') {
+        if (typeof result === "string") {
           try {
             result = JSON.parse(result);
           } catch (e) {
-            console.error('Failed to parse result JSON:', e);
+            console.error("Failed to parse result JSON:", e);
           }
         }
-        
+
         // Map Lambda #3 format to app's TriageResult format
         const mappedResult: TriageResult = {
-          summary: result.clinical_summary?.symptoms || result.summary || "Symptoms analyzed",
-          urgency: result.risk_assessment?.urgency_label?.includes("High") ? "High" 
-                 : result.risk_assessment?.urgency_label?.includes("Medium") ? "Medium"
-                 : result.urgency || "Low",
-          category: result.clinical_summary?.category || result.category || "General",
-          specialist: result.clinical_summary?.specialist_label || result.specialist || "General Practitioner",
-          suggested_action: result.suggested_actions?.[0] || result.suggested_action || "Seek medical advice",
+          summary:
+            result.clinical_summary?.symptoms ||
+            result.summary ||
+            "Symptoms analyzed",
+          urgency: result.risk_assessment?.urgency_label?.includes("High")
+            ? "High"
+            : result.risk_assessment?.urgency_label?.includes("Medium")
+            ? "Medium"
+            : result.urgency || "Low",
+          category:
+            result.clinical_summary?.category || result.category || "General",
+          specialist:
+            result.clinical_summary?.specialist_label ||
+            result.specialist ||
+            "General Practitioner",
+          suggested_action:
+            result.suggested_actions?.[0] ||
+            result.suggested_action ||
+            "Seek medical advice",
         };
-        
+
         return mappedResult;
       }
 
@@ -175,35 +179,10 @@ async function pollForResults(
     }
   }
 
-  throw new Error(`Triage result timeout after ${maxAttempts * intervalMs / 1000} seconds`);
+  throw new Error(
+    `Triage result timeout after ${(maxAttempts * intervalMs) / 1000} seconds`
+  );
 }
-
-/**
- * Step 3B: Listen for Agora RTM result (Alternative to polling)
- *
- * USAGE (Day 2 implementation):
- *
- * import { agoraRTMClient } from '../utils/agoraRTM';
- *
- * // Replace pollForResults() with:
- * const result = await new Promise<TriageResult>((resolve, reject) => {
- *   const timeout = setTimeout(() => reject(new Error("Timeout")), 30000);
- *
- *   agoraRTMClient.on('MessageFromPeer', (message, peerId) => {
- *     if (message.text.includes(sessionId)) {
- *       clearTimeout(timeout);
- *       const result = JSON.parse(message.text);
- *       resolve(result.data);
- *     }
- *   });
- * });
- *
- * Backend Lambda must send via Agora SDK:
- * await agoraClient.sendMessageToPeer(
- *   { text: JSON.stringify({ sessionId, data: triageResult }) },
- *   userId
- * );
- */
 
 /**
  * Main entry point: Secure end-to-end triage processing
