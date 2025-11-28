@@ -28,6 +28,7 @@
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "@types/lodash": "^4.17.20",
+    "agora-rtc-sdk-ng": "^4.24.1",
     "base-64": "^1.0.0",
     "expo": "~53.0.24",
     "expo-audio": "~0.4.9",

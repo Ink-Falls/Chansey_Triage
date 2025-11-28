@@ -12,6 +12,9 @@ import { processTriageAudio } from "../utils/awsTriageService";
 import { useAuth } from "../context/AuthContext";
 
 export type TriageResult = {
+  name?: string;
+  age?: number;
+  gender?: string;
   summary: string;
   urgency: "High" | "Medium" | "Low";
   category: string;
@@ -154,8 +157,9 @@ export function useTriageRecorder() {
             id: `triage_${Date.now()}`,
             userId: userId,
             sessionId: `session_${Date.now()}`,
-            name: "Patient", // In real app, would come from user profile
-            age: 0, // In real app, would come from user profile
+            name: result.name || "Patient",
+            age: result.age || 0,
+            gender: result.gender,
             urgency: result.urgency,
             timestamp: new Date().toISOString(),
             specialties: [result.category, result.specialist],

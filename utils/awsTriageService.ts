@@ -1,4 +1,7 @@
 export type TriageResult = {
+  name?: string;
+  age?: number;
+  gender?: string;
   summary: string;
   urgency: "High" | "Medium" | "Low";
   category: string;
@@ -141,6 +144,9 @@ async function pollForResults(
 
         // Map Lambda #3 format to app's TriageResult format
         const mappedResult: TriageResult = {
+          name: result.patient_info?.name || "Patient",
+          age: result.patient_info?.age ? parseInt(result.patient_info.age, 10) : undefined,
+          gender: result.patient_info?.gender,
           summary:
             result.clinical_summary?.symptoms ||
             result.summary ||
