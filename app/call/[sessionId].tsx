@@ -256,226 +256,318 @@ export default function CallScreen() {
     <View
       style={{
         flex: 1,
-        backgroundColor: theme.background,
+        backgroundColor: "#FFFFFF",
       }}
     >
       {/* Header */}
       <View
         style={{
           paddingTop: 60,
-          paddingHorizontal: 20,
-          paddingBottom: 20,
+          paddingHorizontal: 24,
+          paddingBottom: 24,
+          flexDirection: "row",
           alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        <Text
-          style={{
-            color: theme.text,
-            fontSize: 24,
-            fontWeight: "700",
-            marginBottom: 8,
-          }}
-        >
-          Specialist Call
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <Pressable
+            onPress={() => router.back()}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: "#F3F4F6",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Ionicons name="chevron-back" size={24} color="#000000" />
+          </Pressable>
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: "#7EFD94",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Ionicons name="call" size={20} color="#FFFFFF" />
+          </View>
+          <Text
+            style={{
+              color: "#000000",
+              fontSize: 14,
+              fontWeight: "500",
+            }}
+          >
+            Video/Audio Consultation
+          </Text>
+        </View>
 
-        {isConnected ? (
-          <>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginTop: 12,
-              }}
-            >
-              <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: "#4CAF50",
-                  marginRight: 8,
-                }}
-              />
-              <Text
-                style={{
-                  color: "#4CAF50",
-                  fontSize: 16,
-                  fontWeight: "600",
-                }}
-              >
-                Connected
-              </Text>
-            </View>
-            <Text
-              style={{
-                color: theme.text,
-                fontSize: 18,
-                fontWeight: "600",
-                marginTop: 12,
-                opacity: 0.8,
-              }}
-            >
-              {formatDuration(callDuration)}
-            </Text>
-          </>
-        ) : (
-          <>
-            <ActivityIndicator
-              size="large"
-              color={theme.accent}
-              style={{ marginTop: 20 }}
-            />
-            <Text
-              style={{
-                color: theme.text,
-                fontSize: 16,
-                marginTop: 12,
-                opacity: 0.7,
-              }}
-            >
-              Connecting...
-            </Text>
-          </>
-        )}
+        <View style={{ flexDirection: "row", gap: 6 }}>
+          <View
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: "#9CA3AF",
+            }}
+          />
+          <View
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: "#9CA3AF",
+            }}
+          />
+          <View
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: "#9CA3AF",
+            }}
+          />
+        </View>
       </View>
 
-      {/* Video/Audio Display Area */}
+      {/* Video/Specialist Area */}
       <View
         style={{
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          paddingHorizontal: 20,
+          paddingHorizontal: 24,
         }}
       >
         <View
           style={{
-            width: 120,
-            height: 120,
-            borderRadius: 60,
-            backgroundColor: theme.card,
+            width: 160,
+            height: 160,
+            borderRadius: 80,
+            backgroundColor: "#8B5CF6",
             justifyContent: "center",
             alignItems: "center",
-            borderWidth: 3,
-            borderColor: isConnected ? "#4CAF50" : theme.cardBorder,
+            marginBottom: 24,
+            borderWidth: 4,
+            borderColor: "#FFFFFF",
           }}
         >
-          <Ionicons
-            name="person"
-            size={60}
-            color={theme.text}
-            style={{ opacity: 0.5 }}
-          />
+          <Text
+            style={{
+              color: "#FFFFFF",
+              fontSize: 48,
+              fontWeight: "600",
+            }}
+          >
+            N
+          </Text>
         </View>
+
         <Text
           style={{
-            color: theme.text,
-            fontSize: 20,
-            fontWeight: "600",
-            marginTop: 20,
+            color: "#000000",
+            fontSize: 28,
+            fontWeight: "700",
+            marginBottom: 12,
           }}
         >
           Neurologist
         </Text>
-        {isConnected && (
-          <Text
-            style={{
-              color: theme.text,
-              fontSize: 14,
-              marginTop: 8,
-              opacity: 0.6,
-            }}
-          >
-            Audio Call Active
-          </Text>
-        )}
-      </View>
 
-      {/* Call Controls */}
-      {isConnected && (
-        <View
+        <Text
           style={{
-            paddingHorizontal: 20,
-            paddingBottom: 40,
+            color: "#666666",
+            fontSize: 15,
+            fontWeight: "500",
+            marginBottom: 20,
           }}
         >
+          Specialist Available
+        </Text>
+
+        {isConnected ? (
           <View
             style={{
               flexDirection: "row",
-              justifyContent: "space-around",
-              marginBottom: 30,
-            }}
-          >
-            {/* Mute Button */}
-            <Pressable
-              onPress={toggleMute}
-              style={{
-                width: 70,
-                height: 70,
-                borderRadius: 35,
-                backgroundColor: isMuted ? "#FF4444" : theme.card,
-                justifyContent: "center",
-                alignItems: "center",
-                borderWidth: 2,
-                borderColor: isMuted ? "#FF4444" : theme.cardBorder,
-              }}
-            >
-              <Ionicons
-                name={isMuted ? "mic-off" : "mic"}
-                size={32}
-                color={isMuted ? "#FFF" : theme.text}
-              />
-            </Pressable>
-
-            {/* Speaker Button */}
-            <Pressable
-              onPress={toggleSpeaker}
-              style={{
-                width: 70,
-                height: 70,
-                borderRadius: 35,
-                backgroundColor: isSpeakerOn ? theme.accent : theme.card,
-                justifyContent: "center",
-                alignItems: "center",
-                borderWidth: 2,
-                borderColor: isSpeakerOn ? theme.accent : theme.cardBorder,
-              }}
-            >
-              <Ionicons
-                name={isSpeakerOn ? "volume-high" : "volume-mute"}
-                size={32}
-                color={isSpeakerOn ? "#FFF" : theme.text}
-              />
-            </Pressable>
-          </View>
-
-          {/* End Call Button */}
-          <Pressable
-            onPress={handleEndCall}
-            style={{
-              backgroundColor: "#FF4444",
-              paddingVertical: 18,
-              borderRadius: 16,
-              flexDirection: "row",
-              justifyContent: "center",
               alignItems: "center",
               gap: 12,
+              paddingHorizontal: 24,
+              paddingVertical: 12,
+              backgroundColor: "rgba(139, 92, 246, 0.1)",
+              borderRadius: 24,
             }}
           >
-            <Ionicons name="call" size={24} color="#FFF" />
+            <View
+              style={{
+                width: 12,
+                height: 12,
+                borderRadius: 6,
+                backgroundColor: "#8B5CF6",
+              }}
+            />
             <Text
               style={{
-                color: "#FFF",
-                fontSize: 18,
-                fontWeight: "700",
+                color: "#8B5CF6",
+                fontSize: 14,
+                fontWeight: "600",
+              }}
+            >
+              Connected • {formatDuration(callDuration)}
+            </Text>
+          </View>
+        ) : (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+              paddingHorizontal: 24,
+              paddingVertical: 12,
+              backgroundColor: "rgba(139, 92, 246, 0.1)",
+              borderRadius: 24,
+            }}
+          >
+            <ActivityIndicator size="small" color="#8B5CF6" />
+            <Text
+              style={{
+                color: "#8B5CF6",
+                fontSize: 14,
+                fontWeight: "600",
+              }}
+            >
+              Waiting to connect...
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* Controls */}
+      <View
+        style={{
+          paddingHorizontal: 24,
+          paddingBottom: 48,
+          backgroundColor: "rgba(255, 255, 255, 0.8)",
+          borderTopLeftRadius: 32,
+          borderTopRightRadius: 32,
+        }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 24,
+            paddingTop: 24,
+          }}
+        >
+          {/* End Call Button */}
+          <View style={{ alignItems: "center" }}>
+            <Pressable
+              onPress={handleEndCall}
+              style={{
+                width: 72,
+                height: 72,
+                borderRadius: 36,
+                backgroundColor: "#EF4444",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Ionicons name="call" size={28} color="#FFFFFF" />
+            </Pressable>
+            <Text
+              style={{
+                color: "#6B7280",
+                fontSize: 13,
+                fontWeight: "500",
+                textAlign: "center",
+                marginTop: 10,
               }}
             >
               End Call
             </Text>
-          </Pressable>
+          </View>
+
+          {/* Mute Button */}
+          <View style={{ alignItems: "center" }}>
+            <Pressable
+              onPress={toggleMute}
+              style={{
+                width: 72,
+                height: 72,
+                borderRadius: 36,
+                backgroundColor: isMuted ? "#EF4444" : "#FFFFFF",
+                justifyContent: "center",
+                alignItems: "center",
+                shadowColor: "#000000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 6,
+                elevation: 3,
+              }}
+            >
+              <Ionicons
+                name={isMuted ? "mic-off" : "mic"}
+                size={28}
+                color={isMuted ? "#FFFFFF" : "#000000"}
+              />
+            </Pressable>
+            <Text
+              style={{
+                color: "#6B7280",
+                fontSize: 13,
+                fontWeight: "500",
+                textAlign: "center",
+                marginTop: 10,
+              }}
+            >
+              Mute
+            </Text>
+          </View>
+
+          {/* Speaker Button */}
+          <View style={{ alignItems: "center" }}>
+            <Pressable
+              onPress={toggleSpeaker}
+              style={{
+                width: 72,
+                height: 72,
+                borderRadius: 36,
+                backgroundColor: "#FFFFFF",
+                justifyContent: "center",
+                alignItems: "center",
+                shadowColor: "#000000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 6,
+                elevation: 3,
+              }}
+            >
+              <Ionicons
+                name={isSpeakerOn ? "volume-high" : "volume-mute"}
+                size={28}
+                color={isSpeakerOn ? "#7EFD94" : "#000000"}
+              />
+            </Pressable>
+            <Text
+              style={{
+                color: "#6B7280",
+                fontSize: 13,
+                fontWeight: "500",
+                textAlign: "center",
+                marginTop: 10,
+              }}
+            >
+              Speaker
+            </Text>
+          </View>
         </View>
-      )}
+      </View>
     </View>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Switch, ScrollView, Pressable } from "react-native";
+import { View, Text, Switch, ScrollView, Pressable, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
 import { StatusBar } from "expo-status-bar";
@@ -20,9 +20,13 @@ export default function TriageScreen() {
   const { pulseAnim, fadeAnim } = useTriageAnimations(status, lastResult);
   const colors = getTriageColors(theme, highContrast);
 
+  // Use white background and black text for normal view
+  const bgColor = highContrast ? colors.bg : "#FFFFFF";
+  const textColor = highContrast ? colors.text : "#000000";
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <StatusBar style={isDark || highContrast ? "light" : "dark"} />
+    <View style={{ flex: 1, backgroundColor: bgColor }}>
+      <StatusBar style={highContrast ? "light" : "dark"} />
 
       <ScrollView
         contentContainerStyle={{
@@ -36,7 +40,7 @@ export default function TriageScreen() {
         <View>
           <Text
             style={{
-              color: colors.text,
+              color: textColor,
               fontSize: 28,
               fontWeight: "800",
               marginTop: 40,
@@ -44,11 +48,11 @@ export default function TriageScreen() {
               letterSpacing: -0.5,
             }}
           >
-            Voice-First Clinical Triage
+            Chansey Triage
           </Text>
           <Text
             style={{
-              color: colors.text,
+              color: textColor,
               fontSize: 15,
               opacity: 0.7,
               lineHeight: 22,
@@ -59,14 +63,37 @@ export default function TriageScreen() {
           </Text>
         </View>
 
-        {/* Center Button */}
+        {/* Center Button with Logo */}
         <View
           style={{
             alignItems: "center",
             justifyContent: "center",
             paddingVertical: 40,
+            gap: 20,
           }}
         >
+          {/* Chansey Logo and Text */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+            {/* Chansey Text */}
+            <Text
+              style={{
+                fontSize: 32,
+                fontWeight: "800",
+                color: textColor,
+                letterSpacing: -0.5,
+              }}
+            >
+              Chansey
+            </Text>
+            {/* Logo */}
+            <Image
+              source={require("../assets/images/chansey-logo.png")}
+              style={{ width: 80, height: 80 }}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* Button */}
           <TriageButton
             status={status}
             colors={colors}
@@ -84,19 +111,27 @@ export default function TriageScreen() {
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "space-between",
-              backgroundColor: colors.card,
+              backgroundColor: highContrast ? colors.card : "#F5F5F5",
               padding: 16,
               borderRadius: 12,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: highContrast ? colors.border : "#E0E0E0",
             }}
           >
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 12 }}
             >
-              <Ionicons name="contrast" size={24} color={colors.text} />
+              <Ionicons
+                name="contrast"
+                size={24}
+                color={highContrast ? colors.text : textColor}
+              />
               <Text
-                style={{ color: colors.text, fontSize: 16, fontWeight: "600" }}
+                style={{
+                  color: highContrast ? colors.text : textColor,
+                  fontSize: 16,
+                  fontWeight: "600",
+                }}
               >
                 High-Contrast Mode
               </Text>
@@ -104,8 +139,8 @@ export default function TriageScreen() {
             <Switch
               value={highContrast}
               onValueChange={setHighContrast}
-              thumbColor={highContrast ? "#FFD400" : undefined}
-              trackColor={{ true: "#FFD400" }}
+              thumbColor={highContrast ? "#FFFFFF" : undefined}
+              trackColor={{ true: "#FFFFFF" }}
             />
           </View>
 

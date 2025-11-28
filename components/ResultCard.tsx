@@ -92,6 +92,14 @@ export function ResultCard({
       ? "warning"
       : "checkmark-circle";
 
+  // Determine if high contrast mode is active
+  const isHighContrast = colors.bg === "#000000";
+  const cardBg = isHighContrast ? "#000000" : "#FFFFFF";
+  const textColor = isHighContrast ? "#FFFFFF" : "#000000";
+  const subtleBg = isHighContrast ? "#1a1a1a" : "#F5F5F5";
+  const borderColor = isHighContrast ? "#333333" : "#E0E0E0";
+  const suggestedActionBg = isHighContrast ? "#111111" : "#F9F9F9";
+
   // RTM auto-alert removed; alerting handled by backend or manual flow
 
   return (
@@ -114,7 +122,7 @@ export function ResultCard({
           borderColor: urgencyColor,
           borderRadius: 16,
           padding: 20,
-          backgroundColor: colors.card,
+          backgroundColor: cardBg,
           shadowColor: urgencyColor,
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.3,
@@ -159,7 +167,7 @@ export function ResultCard({
         <View style={{ marginBottom: 16 }}>
           <Text
             style={{
-              color: colors.text,
+              color: textColor,
               fontSize: 14,
               fontWeight: "600",
               marginBottom: 6,
@@ -172,7 +180,7 @@ export function ResultCard({
           </Text>
           <Text
             style={{
-              color: colors.text,
+              color: textColor,
               fontSize: 16,
               lineHeight: 24,
             }}
@@ -189,14 +197,14 @@ export function ResultCard({
             marginBottom: 16,
             paddingVertical: 12,
             paddingHorizontal: 16,
-            backgroundColor: colors.subtle,
+            backgroundColor: subtleBg,
             borderRadius: 12,
           }}
         >
           <View style={{ flex: 1 }}>
             <Text
               style={{
-                color: colors.text,
+                color: textColor,
                 fontSize: 12,
                 opacity: 0.6,
                 marginBottom: 4,
@@ -207,7 +215,7 @@ export function ResultCard({
             </Text>
             <Text
               style={{
-                color: colors.text,
+                color: textColor,
                 fontSize: 16,
                 fontWeight: "700",
               }}
@@ -218,14 +226,14 @@ export function ResultCard({
           <View
             style={{
               width: 1,
-              backgroundColor: colors.border,
+              backgroundColor: borderColor,
               marginHorizontal: 16,
             }}
           />
           <View style={{ flex: 1, alignItems: "flex-end" }}>
             <Text
               style={{
-                color: colors.text,
+                color: textColor,
                 fontSize: 12,
                 opacity: 0.6,
                 marginBottom: 4,
@@ -236,7 +244,7 @@ export function ResultCard({
             </Text>
             <Text
               style={{
-                color: colors.text,
+                color: textColor,
                 fontSize: 16,
                 fontWeight: "700",
                 textAlign: "right",
@@ -250,7 +258,7 @@ export function ResultCard({
         {/* Suggested Action */}
         <View
           style={{
-            backgroundColor: colors.bg,
+            backgroundColor: suggestedActionBg,
             padding: 16,
             borderRadius: 12,
             borderLeftWidth: 4,
@@ -267,12 +275,12 @@ export function ResultCard({
             <Ionicons
               name="arrow-forward-circle"
               size={20}
-              color={colors.text}
+              color={textColor}
               style={{ marginRight: 8 }}
             />
             <Text
               style={{
-                color: colors.text,
+                color: textColor,
                 fontSize: 14,
                 fontWeight: "700",
                 textTransform: "uppercase",
@@ -284,7 +292,7 @@ export function ResultCard({
           </View>
           <Text
             style={{
-              color: colors.text,
+              color: textColor,
               fontSize: 15,
               lineHeight: 22,
             }}
